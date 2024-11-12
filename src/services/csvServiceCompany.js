@@ -11,6 +11,7 @@ const ensureColumnsExist = async (columns) => {
         });
     });
 
+
     const newColumns = columns.filter(column => !existingColumns.includes(column));
     if (newColumns.length > 0) {
         const alterQuery = newColumns.map(col => `ADD COLUMN \`${col}\` VARCHAR(255)`).join(', ');
