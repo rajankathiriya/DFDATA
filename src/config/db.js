@@ -26,7 +26,7 @@
 const mysql = require('mysql');
 
 const db = mysql.createPool({
-    host: 'srv1639.hstgr.io',
+    host: '193.203.184.143',
     user: 'u801738259_data',
     password: 'Rajan@123#123',
     database: 'u801738259_data',
