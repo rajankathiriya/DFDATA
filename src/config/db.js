@@ -38,6 +38,8 @@ const db = mysql.createPool({
 
 db.getConnection((err, connection) => {
     if (err) {
+        console.log('error');
+
         console.error('Database connection failed:', err.code, err.message, err.stack);
         return;
     }
