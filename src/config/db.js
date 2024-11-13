@@ -38,11 +38,11 @@ const db = mysql.createPool({
 
 db.getConnection((err, connection) => {
     if (err) {
-        console.error('Database connection failed:', err);
+        console.error('Database connection failed:', err.code, err.message, err.stack);
         return;
     }
     console.log('Connected to the database');
-    connection.release(); // Release the connection back to the pool
+    connection.release();
 });
 
 module.exports = db;
