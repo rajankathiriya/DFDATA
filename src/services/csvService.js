@@ -2,26 +2,11 @@
 const xlsx = require('xlsx');
 const db = require('../config/db');
 
-const ensureColumnsExist = async (columns) => {
-    const existingColumns = await new Promise((resolve, reject) => {
-        const query = `SHOW COLUMNS FROM mst_gst`;
-        db.query(query, (err, results) => {
-            if (err) return reject(err);
-            resolve(results.map(column => column.Field));
-        });
-    });
-
-    const newColumns = columns.filter(column => !existingColumns.includes(column));
-    if (newColumns.length > 0) {
-        const alterQuery = newColumns.map(col => `ADD COLUMN \`${col}\` VARCHAR(255)`).join(', ');
-        await new Promise((resolve, reject) => {
-            db.query(`ALTER TABLE mst_gst ${alterQuery}`, (err) => {
-                if (err) return reject(err);
-                resolve();
-            });
-        });
-    }
-};
+const predefinedColumns = [
+    'GSTIN', 'Registration Date', 'PAN', 'Mobile', 'Email',
+    'Legal Name', 'Trade Name', 'Business Constitution',
+    'Business Nature', 'Pincode', 'Address'
+];
 
 const filterExistingRecords = (data) => {
     return new Promise((resolve, reject) => {
@@ -39,11 +24,10 @@ const filterExistingRecords = (data) => {
 };
 
 const insertDataInBulk = (data) => {
-    return new Promise(async (resolve, reject) => {
-        const columns = [...new Set(data.flatMap(Object.keys))];
-        const standardizedData = data.map(row => columns.map(col => row[col] ?? null));
+    return new Promise((resolve, reject) => {
+        const standardizedData = data.map(row => predefinedColumns.map(col => row[col] ?? null));
 
-        const query = `INSERT INTO mst_gst (${columns.map(col => `\`${col}\``).join(', ')}) VALUES ?`;
+        const query = `INSERT INTO mst_gst (${predefinedColumns.map(col => `\`${col}\``).join(', ')}) VALUES ?`;
         db.query(query, [standardizedData], (err, result) => {
             if (err) return reject(err);
             resolve(result);
@@ -66,7 +50,6 @@ exports.processExcel = (filePath) => {
                 results.push(row);
 
                 if (results.length >= batchSize) {
-                    await ensureColumnsExist(Object.keys(row));
                     const filteredData = await filterExistingRecords(results);
                     if (filteredData.length > 0) {
                         await insertDataInBulk(filteredData);
@@ -76,7 +59,6 @@ exports.processExcel = (filePath) => {
             }
 
             if (results.length > 0) {
-                await ensureColumnsExist(Object.keys(results[0]));
                 const filteredData = await filterExistingRecords(results);
                 if (filteredData.length > 0) {
                     await insertDataInBulk(filteredData);
