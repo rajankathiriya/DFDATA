@@ -8,6 +8,13 @@ const predefinedColumns = [
     'Business Nature', 'Pincode', 'Address'
 ];
 
+// Function to parse and reformat dates from dd-mm-yyyy to yyyy-mm-dd
+const formatDate = (dateString) => {
+    if (!dateString) return null;
+    const [day, month, year] = dateString.split('-');
+    return `${year}-${month}-${day}`;
+};
+
 const filterExistingRecords = (data) => {
     return new Promise((resolve, reject) => {
         const uniqueIdentifiers = data.map(row => [row.PAN, row.GSTIN]);
@@ -42,6 +49,13 @@ exports.processExcel = (filePath) => {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const data = xlsx.utils.sheet_to_json(worksheet);
+
+            // Reformat the "Registration Date" column to yyyy-mm-dd format
+            data.forEach(row => {
+                if (row['Registration Date']) {
+                    row['Registration Date'] = formatDate(row['Registration Date']);
+                }
+            });
 
             const batchSize = 500;
             let results = [];

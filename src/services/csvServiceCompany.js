@@ -1,8 +1,6 @@
 // excelService.js
 const xlsx = require('xlsx');
 const db = require('../config/db');
-
-// Predefined columns in the mst_company table
 const predefinedColumns = [
     'Company', 'CIN', 'DATE OF REGISTRATION', 'DIN', 'DIRECTOR NAME',
     'DESIGNATION', 'Date Of Birth', 'Mobile', 'Email', 'Gender',
@@ -11,6 +9,13 @@ const predefinedColumns = [
     'ACTIVITY DESCRIPTION', 'DATE JOIN', 'Registered Office Address',
     'TYPE COMPANY'
 ];
+
+// Function to parse and reformat dates from dd-mm-yyyy to yyyy-mm-dd
+const formatDate = (dateString) => {
+    if (!dateString) return null;
+    const [day, month, year] = dateString.split('-');
+    return `${year}-${month}-${day}`;
+};
 
 const filterExistingRecords = (data) => {
     return new Promise((resolve, reject) => {
@@ -29,7 +34,6 @@ const filterExistingRecords = (data) => {
 
 const insertDataInBulk = (data) => {
     return new Promise((resolve, reject) => {
-        // Standardize data to predefined columns
         const standardizedData = data.map(row => predefinedColumns.map(col => row[col] ?? null));
 
         const query = `INSERT INTO mst_company (${predefinedColumns.map(col => `\`${col}\``).join(', ')}) VALUES ?`;
@@ -47,6 +51,13 @@ exports.processExcel = (filePath) => {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const data = xlsx.utils.sheet_to_json(worksheet);
+
+            // Reformat date columns
+            data.forEach(row => {
+                if (row['DATE OF REGISTRATION']) row['DATE OF REGISTRATION'] = formatDate(row['DATE OF REGISTRATION']);
+                if (row['Date Of Birth']) row['Date Of Birth'] = formatDate(row['Date Of Birth']);
+                if (row['DATE JOIN']) row['DATE JOIN'] = formatDate(row['DATE JOIN']);
+            });
 
             const batchSize = 500;
             let results = [];
