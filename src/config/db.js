@@ -32,7 +32,7 @@ const db = mysql.createPool({
     database: 'u801738259_datafusion',
     port: 3306,
     connectionLimit: 10,  // Pool connection limit
-    connectTimeout: 0,     // No timeout for initial connection
+    connectTimeout: 10000,     // No timeout for initial connection
     acquireTimeout: 0,     // No timeout for acquiring connections from pool
 });
 
