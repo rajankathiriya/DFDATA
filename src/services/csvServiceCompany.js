@@ -1,33 +1,42 @@
 const xlsx = require("xlsx");
 const db = require("../config/db"); // Ensure the database connection is correctly configured
 
-// Utility function to format dates
 const formatDate = (dateString) => {
-    if (!dateString) return null;
+    if (!dateString) return null; // Handle empty or null values
 
+    // If the date is a number (Excel serial date format)
     if (!isNaN(dateString)) {
-        const excelEpoch = new Date(1900, 0, 1);
+        const excelEpoch = new Date(1900, 0, 1); // Start date for Excel serial dates
         const date = new Date(excelEpoch.getTime() + (dateString - 1) * 24 * 60 * 60 * 1000);
-        return date.toISOString().split("T")[0];
+        if (isNaN(date.getTime())) return null; // Return null if date is invalid
+        return date.toISOString().split("T")[0]; // Format as yyyy-mm-dd
     }
 
-    dateString = dateString.toString();
-
-    if (dateString.includes("/")) {
-        const parts = dateString.split("/");
-        if (parts.length === 3) {
-            const [part1, part2, year] = parts;
-            const day = part1.length === 2 && parseInt(part1) <= 31 ? part1 : part2;
-            const month = part2.length === 2 && parseInt(part2) <= 12 ? part2 : part1;
-            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    // Handle string date in mm/dd/yyyy format
+    const dateParts = dateString.split("/");
+    if (dateParts.length === 3) {
+        const [month, day, year] = dateParts.map(part => part.padStart(2, "0"));
+        if (isValidDate(day, month, year)) {
+            return `${year}-${month}-${day}`; // Return formatted date as yyyy-mm-dd
         }
-    } else if (dateString.includes("-") && dateString.length === 10) {
-        return dateString;
     }
 
-    console.warn(`Date format unrecognized or missing for dateString: ${dateString}`);
-    return null;
+    // Handle string date in yyyy-mm-dd format (no change needed, already in valid format)
+    const isoDateParts = dateString.split("-");
+    if (isoDateParts.length === 3 && isoDateParts[0].length === 4 && isoDateParts[1].length === 2 && isoDateParts[2].length === 2) {
+        return dateString; // Already in yyyy-mm-dd format
+    }
+
+    console.warn(`Unrecognized or invalid date: ${dateString}`);
+    return null; // Return null for invalid dates
 };
+
+// Helper function to validate the date
+const isValidDate = (day, month, year) => {
+    const date = new Date(`${year}-${month}-${day}`);
+    return !isNaN(date.getTime()) && date.getDate() === parseInt(day) && date.getMonth() + 1 === parseInt(month);
+};
+
 
 // Function to filter out existing records based on CIN or DIN
 const filterExistingRecords = (data) => {
@@ -78,13 +87,33 @@ exports.processExcel = (filePath) => {
 
             console.log("Processing data from Excel...");
 
-            // Reformat the "Registration Date" and "Date Join" columns to yyyy-mm-dd format
+            // Reformat the "DATE OF REGISTRATION" and "DATE JOIN" columns to dd-mm-yyyy format
             data.forEach(row => {
                 if (row['DATE OF REGISTRATION']) {
-                    row['DATE OF REGISTRATION'] = formatDate(row['DATE OF REGISTRATION']);
+                    const originalDate = row['DATE OF REGISTRATION'];
+                    const formattedDate = formatDate(originalDate);
+                    if (!formattedDate) {
+                        console.error(`Invalid 'DATE OF REGISTRATION' value in row:`, row);
+                        row['DATE OF REGISTRATION'] = null; // Set to null if invalid
+                    } else {
+                        row['DATE OF REGISTRATION'] = formattedDate;
+                    }
+                } else {
+                    console.warn(`Missing 'DATE OF REGISTRATION' in row:`, row);
+                    row['DATE OF REGISTRATION'] = null; // Assign null if date is missing
                 }
+
                 if (row['DATE JOIN']) {
-                    row['DATE JOIN'] = formatDate(row['DATE JOIN']);
+                    const originalDate = row['DATE JOIN'];
+                    const formattedDate = formatDate(originalDate);
+                    if (!formattedDate) {
+                        console.error(`Invalid 'DATE JOIN' value in row:`, row);
+                        row['DATE JOIN'] = null; // Set to null if invalid
+                    } else {
+                        row['DATE JOIN'] = formattedDate;
+                    }
+                } else {
+                    row['DATE JOIN'] = null; // Assign null if date is missing
                 }
             });
 
