@@ -28,7 +28,7 @@ const mysql = require('mysql');
 const db = mysql.createPool({
     host: '193.203.184.143',
     user: 'u801738259_datafusion',
-    password: 'Y6a]DW#B',
+    password: 'Rjsa;[*cg7;N',
     database: 'u801738259_datafusion',
     port: 3306,
     connectionLimit: 10,  // Pool connection limit
