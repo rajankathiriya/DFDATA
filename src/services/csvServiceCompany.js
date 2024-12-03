@@ -58,7 +58,7 @@ const filterExistingRecords = (data) => {
 const insertDataInBulk = (data) => {
     return new Promise((resolve, reject) => {
         const predefinedColumns = [
-            'Company', 'CIN', 'DATE OF REGISTRATION', 'DIN', 'DIRECTOR NAME',
+            'Company', 'CIN','CEmail', 'DATE OF REGISTRATION', 'DIN', 'DIRECTOR NAME',
             'DESIGNATION', 'Date Of Birth', 'Mobile', 'Email', 'Gender', 'PINCODE',
             'City', 'State', 'COUNTRY', 'ROC', 'CATEGORY', 'CLASS', 'SUBCATEGORY',
             'AUTHORIZED CAPITAL', 'PAIDUP CAPITAL', 'ACTIVITY DESCRIPTION', 'DATE JOIN',
